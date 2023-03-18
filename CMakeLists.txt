@@ -6,4 +6,5 @@ project(SingleHeaderFileGenerator)
 
 add_executable(gen
     main.cpp
+    String.hpp
 )
