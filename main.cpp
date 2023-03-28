@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     //iterate input files:
     for (const auto& item : fs::directory_iterator(input_folder_path))
     {
-        Console::WriteLine(item.path());
+        Console::WriteLine(item.path().string());
     }
     return 0;
 }
