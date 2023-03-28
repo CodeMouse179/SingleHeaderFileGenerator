@@ -74,19 +74,19 @@ int main(int argc, char** argv)
     //iterate input files:
     for (const auto& item : fs::directory_iterator(input_folder_path))
     {
-        int index = StringA::LastIndexOf(item.path(), "/");
+        int index = StringA::LastIndexOf(item.path().string(), "/");
         if (index == -1) throw "Exception";
-        std::string fileName = StringA::Substring(item.path(), index + 1);
+        std::string fileName = StringA::Substring(item.path().string(), index + 1);
         int dotIndex = StringA::LastIndexOf(fileName, ".");
         if (dotIndex == -1) continue;
         std::string extension = StringA::Substring(fileName, dotIndex + 1);
         if (extension == "hpp" || extension == "h")
         {
-            headerFilesDict[fileName] = item.path();
+            headerFilesDict[fileName] = item.path().string();
         }
         else if(extension == "cpp" || extension == "c")
         {
-            sourceFilesDict[fileName] = item.path();
+            sourceFilesDict[fileName] = item.path().string();
         }
     }
     //
