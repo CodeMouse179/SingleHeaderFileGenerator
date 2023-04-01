@@ -1,6 +1,6 @@
 //      +--------------------------------------------------------------------------------+
-//      |                                  String v1.40.2                                |
-//      |  Modified Date : 2023/3/18                                                     |
+//      |                                  String v1.44.0                                |
+//      |  Modified Date : 2023/3/28                                                     |
 //      |  Introduction : System.String in C++                                           |
 //      |  License : MIT                                                                 |
 //      |  Platform : Windows, Linux, macOS                                              |
@@ -18,12 +18,38 @@
 #define SYSTEM_STRING_HPP
 
 #define SYSTEM_STRING_VERSION_MAJOR 1
-#define SYSTEM_STRING_VERSION_MINOR 40
-#define SYSTEM_STRING_VERSION_PATCH 2
+#define SYSTEM_STRING_VERSION_MINOR 44
+#define SYSTEM_STRING_VERSION_PATCH 0
 #define SYSTEM_STRING_VERSION (SYSTEM_STRING_VERSION_MAJOR << 16 | SYSTEM_STRING_VERSION_MINOR << 8 | SYSTEM_STRING_VERSION_PATCH)
-#define SYSTEM_STRING_VERSION_STRING "1.40.2"
+#define SYSTEM_STRING_VERSION_STRING "1.44.0"
 
 //--------------------System.hpp START--------------------
+
+#define SYSTEM_VERSION_MAJOR 0
+#define SYSTEM_VERSION_MINOR 5
+#define SYSTEM_VERSION_PATCH 2
+#define SYSTEM_VERSION (SYSTEM_VERSION_MAJOR << 16 | SYSTEM_VERSION_MINOR << 8 | SYSTEM_VERSION_PATCH)
+#define SYSTEM_VERSION_STRING "0.5.2"
+
+//Microsoft C/C++ Compiler:
+#if defined(_MSC_VER) && !defined(__clang__)
+#define SYSTEM_MSC 1
+#endif
+
+//GNU C/C++ Compiler:
+#if defined(__GNUC__) && !defined(__clang__)
+#define SYSTEM_GCC 1
+#endif
+
+//Clang C/C++ Compiler:
+#if defined(__clang__)
+#define SYSTEM_CLA 1
+#endif
+
+//Standard C/C++ Compiler:
+#if defined(SYSTEM_GCC) || defined(SYSTEM_CLA)
+#define SYSTEM_SCC 1
+#endif
 
 //Windows Platform:
 #if defined(WIN32) || defined(_WIN32)
@@ -45,6 +71,62 @@
 //POSIX Platform:
 #if defined(SYSTEM_LINUX) || defined(SYSTEM_MACOS)
 #define SYSTEM_POSIX 1
+#endif
+
+//C Language(Microsoft C/C++ Compiler):
+#if defined(SYSTEM_MSC)
+#if defined(__STDC_VERSION__) && !defined(__cplusplus)
+#define SYSTEM_C 1
+#elif !defined(__cplusplus)
+#define SYSTEM_C 2
+#endif
+#endif
+
+//C Language(Standard C/C++ Compiler):
+#if defined(SYSTEM_SCC)
+#if defined(__STDC__) && !defined(__cplusplus)
+#define SYSTEM_C 1
+#elif !defined(__cplusplus)
+#define SYSTEM_C 2
+#endif
+#endif
+
+//C Version Definition(Microsoft C/C++ Compiler):
+#if defined(SYSTEM_MSC) && defined(SYSTEM_C)
+#if !defined(__STDC_VERSION__)
+#define SYSTEM_C_90 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199409L)
+#define SYSTEM_C_90 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define SYSTEM_C_99 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define SYSTEM_C_11 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201710L)
+#define SYSTEM_C_17 1
+#endif
+#endif
+
+//C Version Definition(Standard C/C++ Compiler):
+#if defined(SYSTEM_SCC) && defined(SYSTEM_C)
+#if defined(__STDC__) && !defined(__STDC_VERSION__)
+#define SYSTEM_C_90 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199409L)
+#define SYSTEM_C_90 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define SYSTEM_C_99 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define SYSTEM_C_11 1
+#endif
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201710L)
+#define SYSTEM_C_17 1
+#endif
 #endif
 
 //C++ Language:
@@ -88,6 +170,12 @@
 #if (__cplusplus >= 202002L)
 #define SYSTEM_CXX_20 1
 #endif
+#endif
+
+#if defined(SYSTEM_CXX)
+namespace System
+{
+}
 #endif
 
 //--------------------System.hpp END--------------------
@@ -230,6 +318,9 @@
 #define T8(s) s
 #endif
 
+//TEXT:
+#define TEXT(s) U8(s)
+
 //Specifies the execution character set used for string and character literals.
 #ifdef SYSTEM_STRING_SET_UTF8
 #ifdef SYSTEM_WINDOWS
@@ -329,6 +420,10 @@
 
 #ifndef RIGHT_CURLY_BRACKET
 #define RIGHT_CURLY_BRACKET '}'
+#endif
+
+#ifndef SYSTEM_STRING_BASE_BUFFER_SIZE
+#define SYSTEM_STRING_BASE_BUFFER_SIZE 16
 #endif
 
 namespace System
@@ -568,6 +663,11 @@ namespace System
             return s.size();
         }
 
+        static int Length(const char* c_str)
+        {
+            return String::Length(std::string(c_str));
+        }
+
     public:
         static std::basic_string<T> Clone(const std::basic_string<T>& s)
         {
@@ -753,6 +853,12 @@ namespace System
             {
                 return String::Equals(a, b);
             }
+        }
+
+        //该重载的意义在于防止String::Format在Visual C++11, C++14环境下只传入format参数而产生的编译错误
+        static std::basic_string<T> Format(const std::basic_string<T>& format)
+        {
+            return format;
         }
 
         template<typename... Types>
@@ -2941,6 +3047,14 @@ namespace System
             return false;
         }
 
+        template<typename Type>
+        static bool Write(Type value)
+        {
+            std::basic_ostringstream<T> boss;
+            boss << value;
+            return String::Write(boss.str());
+        }
+
         static bool WriteLine()
         {
             return String::Write(U8(NEW_LINE_STRING));
@@ -2950,6 +3064,14 @@ namespace System
         static bool WriteLine(const std::string& s)
         {
             return String::Write(s + U8(NEW_LINE_STRING));
+        }
+
+        template<typename Type>
+        static bool WriteLine(Type value)
+        {
+            std::basic_ostringstream<T> boss;
+            boss << value;
+            return String::Write(boss.str() + U8(NEW_LINE_STRING));
         }
 
         static int WindowWidth()
@@ -3106,6 +3228,13 @@ namespace System
             boss << value << separator;
         }
     };
+
+    template<typename CharType>
+    class StringBase
+    {
+    };
+
+    typedef StringBase<char> string;
 }
 
 #endif
